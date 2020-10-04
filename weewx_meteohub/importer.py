@@ -14,31 +14,29 @@ class Importer:
             return False
 
         self.output_file = open(output_file, "w")
-        self.csv_writer = csv.writer(
-            self.output_file,
-            delimiter=",",
-            quotechar='"',
-            quoting=csv.QUOTE_MINIMAL,
+        fieldnames = [
+            "date_time",
+            "temp",
+            "hum",
+            "dew",
+            "pressure",
+            "baro",
+            "wind_dir",
+            "gust_speed",
+            "wind_speed",
+            "wind_chill",
+            "rain",
+            "rain_rate",
+            "rad",
+        ]
+
+        # instanciate csv writer
+        self.csv_writer = csv.DictWriter(
+            self.output_file, fieldnames=fieldnames
         )
 
         # Write csv header
-        self.csv_writer.writerow(
-            [
-                "date_time",
-                "temp",
-                "hum",
-                "dew",
-                "pressure",
-                "baro",
-                "wind_dir",
-                "gust_speed",
-                "wind_speed",
-                "wind_chill",
-                "rain",
-                "rain_rate",
-                "rad",
-            ]
-        )
+        self.csv_writer.writeheader()
 
     def __del__(self):
         # Close input and output files
@@ -85,20 +83,20 @@ class Importer:
         """
 
         time = time.strftime("%Y-%m-%d %H:%M")
-        csv_data = []
-        csv_data.append(time)
-        csv_data.append(thd[0])  # temp
-        csv_data.append(thd[1])  # hum
-        csv_data.append(thd[2])  # dew
-        csv_data.append(thdb[3])  # pressure
-        csv_data.append(thdb[4])  # baro (sealevel)
-        csv_data.append(wind[0])  # wind dir
-        csv_data.append(wind[1])  # gust
-        csv_data.append(wind[2])  # wind avg
-        csv_data.append(wind[3])  # wind chill
-        csv_data.append(rain[1])  # rain
-        csv_data.append(rain[0])  # rain rate
-        csv_data.append(sol)  # solar radiation
+        csv_data = {}
+        csv_data["date_time"] = time
+        csv_data["temp"] = thd[0]
+        csv_data["hum"] = thd[1]
+        csv_data["dew"] = thd[2]
+        csv_data["pressure"] = thdb[3]
+        csv_data["baro"] = thdb[4]
+        csv_data["wind_dir"] = wind[0]
+        csv_data["gust_speed"] = wind[1]
+        csv_data["wind_speed"] = wind[2]
+        csv_data["wind_chill"] = wind[3]
+        csv_data["rain"] = rain[1]
+        csv_data["rain_rate"] = rain[0]
+        csv_data["rad"] = sol
 
         self.csv_writer.writerow(csv_data)
 
