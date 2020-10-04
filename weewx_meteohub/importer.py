@@ -44,15 +44,18 @@ class Importer:
         self.output_file.close()
 
     def count_lines(self):
-        """ Counts the lines in the input file """
+        """
+        Counts the lines in the input file
+        This method is not used in the moment and may be deleted in future.
+        """
         count = 0
         self.input_file.seek(0, 0)
-        for line in self.input_file:
-            count += 1
+        for count, line in enumerate(self.input_file, 1):
+            pass
         return count
 
     def get_start_date(self):
-        """ Reads the date of the first line """
+        """ Reads the datetime of the first line in our input file """
         self.input_file.seek(0, 0)
         first_line = self.input_file.readline()
         sensor = Sensor(first_line)
@@ -108,7 +111,7 @@ class Importer:
         file_position = 0
         self.input_file.seek(file_position)
 
-        # Count the number of data sets
+        # Count the number of imported data sets
         datasets_imported = 0
 
         # Initialize data
@@ -148,9 +151,7 @@ class Importer:
             else:
                 print(f"Time: {interval_end}\r", end="")
                 # print(f"---------- Time: {interval_end}-------------")
-                # print(sensor_data.get_th_mean_values(thd_value_list))
-                # print(sensor_data.get_thb_mean_values(thdb_value_list))
-                # print(sensor_data.get_rain_mean_values(rain_value_list))
+
                 rate, total = sensor_data.get_rain_mean_values(rain_value_list)
 
                 self.write(
@@ -161,10 +162,6 @@ class Importer:
                     sensor_data.get_rain_mean_values(rain_value_list),
                     sensor_data.get_sol_mean_value(sol_value_list),
                 )
-
-                # interval_start, interval_end = self.get_interval(
-                #    sensor_data.get_date()
-                # )
 
                 # next interval
                 if self.get_interval(sensor_data.get_date()):
@@ -193,5 +190,6 @@ class Importer:
             sensor_data.get_sol_mean_value(sol_value_list),
         )
 
-        print(f"Stop import at {interval_end}")
+        # Show some information
+        print(f"Finished import at {interval_end}")
         print(f"{datasets_imported} of {datasets_total} datasets imported.")
