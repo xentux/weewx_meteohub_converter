@@ -111,8 +111,7 @@ class Importer:
         self.input_file.seek(file_position)
 
         # Count the number of data sets
-        counter_total = 0
-        counter_imported = 0
+        datasets_imported = 0
 
         # Initialize data
         thd_value_list = []
@@ -124,33 +123,32 @@ class Importer:
         interval_start, interval_end = self.get_interval(start_date)
         print(f"First interval: {interval_start} - {interval_end}")
 
-        for line in self.input_file:
+        for datasets_total, line in enumerate(self.input_file, 1):
             sensor_data = Sensor(line)
             if interval_start <= sensor_data.get_date() < interval_end:
                 # print(f"in range - {sensor_data.get_date()}")
-                # print(f"{counter_total}: {line}")
-                counter_total += 1
+                # print(f"{datasets_total}: {line}")
                 file_position += len(line)
 
                 if sensor_data.get_sensor_name() == "th0":
                     thd_value_list.append(sensor_data.get_th_values())
-                    counter_imported += 1
+                    datasets_imported += 1
                 elif sensor_data.get_sensor_name() == "thb0":
                     thdb_value_list.append(sensor_data.get_thb_values())
-                    counter_imported += 1
+                    datasets_imported += 1
                 elif sensor_data.get_sensor_name() == "wind0":
                     wind_value_list.append(sensor_data.get_wind_values())
-                    counter_imported += 1
+                    datasets_imported += 1
                 elif sensor_data.get_sensor_name() == "rain0":
                     rain_value_list.append(sensor_data.get_rain_values())
-                    counter_imported += 1
+                    datasets_imported += 1
                 elif sensor_data.get_sensor_name() == "sol0":
                     sol_value_list.append(sensor_data.get_sol_value())
-                    counter_imported += 1
+                    datasets_imported += 1
                 elif sensor_data.get_sensor_name() == "uv0":
                     pass
             else:
-                # print(f"Time: {interval_end}\r", end="")
+                print(f"Time: {interval_end}\r", end="")
                 # print(f"---------- Time: {interval_end}-------------")
                 # print(sensor_data.get_th_mean_values(thd_value_list))
                 # print(sensor_data.get_thb_mean_values(thdb_value_list))
@@ -176,11 +174,9 @@ class Importer:
                     interval_end = interval_start + datetime.timedelta(
                         minutes=5
                     )
-                    print(f"next {interval_start} - {interval_end}")
 
-                # 1 line back (we have to read the last dataset again)
+                # one line back (we have to read the last dataset again)
                 self.input_file.seek(file_position)
-                print(f"File position: {file_position}")
 
                 # Delete last interval data
                 thd_value_list = []
@@ -200,4 +196,4 @@ class Importer:
         )
 
         print(f"Stop import at {interval_end}")
-        print(f"{counter_imported} of {counter_total} datasets imported.")
+        print(f"{datasets_imported} of {datasets_total} datasets imported.")
