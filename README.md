@@ -11,3 +11,10 @@ If you have need to import meteohub raw data to your WeeWX system or want to con
 This python module reads the meteohub raw data and converts it to csv files which can be imported to WeeWX using the WeeWX wee_import util.
 
 `./wm_convert.py -i 202001/raw -o 202001.csv`
+
+Then use *wee_import* to impor the csv file to WeeWX, f.e. `wee_import --import-config=config/csv.conf`
+
+I provided an example config file in */config*.
+
+## Todo
+At the moment the converter only works for a single raw data file. It should convert a provided path with all raw data from a meteohub server.
