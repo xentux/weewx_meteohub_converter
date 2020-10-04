@@ -1,0 +1,32 @@
+*.pyc
+__pycache__
+
+# Packages
+*.egg
+/*.egg-info
+/dist/*
+build
+_build
+.cache
+*.so
+
+# VisualStudio Code
+.vscode
+
+# Test and coverage
+.coverage
+coverage.xml
+htmlcov
+.pytest_cache
+
+
+demo_input.txt
+out.txt
+raw*
+
+# macOS
+.DS_Store
+
+# data
+*.csv
+
