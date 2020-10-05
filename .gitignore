@@ -23,6 +23,7 @@ htmlcov
 demo_input.txt
 out.txt
 raw*
+csv_data/
 
 # macOS
 .DS_Store
