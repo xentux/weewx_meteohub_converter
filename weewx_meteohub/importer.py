@@ -222,6 +222,7 @@ class Importer:
             sensor_data.get_sol_mean_value(sol_value_list),
             sensor_data.get_uv_mean_value(uv_value_list),
         )
+        print(f"Last interval: {interval_start} - {interval_end}")
 
         # Show some information
         print(f"Finished import at {interval_end}")
