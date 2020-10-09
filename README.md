@@ -20,8 +20,12 @@ I provided an example config file in */config*.
 The converter reads the given raw data file, sorts the datasets (lines) by date and writes this sorted data to a temporary file. (I don't want to touch the original data - just for the case that someone doesn't have a backup.) I discovered the issue that the meteohub raw data files may not be in chronological order. This causes issues during calcuating the time condensed input data. That's the cause why I sort the input data.
 The converter reads now the data for 5 minute intervals and calculates the mean values for temperatures, humidity and wind. Rain will be summed up for that interval.
 At the end the intervals are written to the output file in CSV format. You can import now this data to WeeWX. At the moment it makes sense, to look over the output file - you may open it in Excel or Numbers f.e. - and do a visual inspection.
+
 ## Todo
-At the moment the converter only works for a single raw data file. It should convert a provided path with all raw data from a meteohub server.
+- Adding min/max values to mean data functions
+- Support for sensors with leading 0 in the value string
+- Adding support for importing a complete raw data path
+- Implement T-sensors
 
 ## History
 - Added input file sorting 
