@@ -26,6 +26,13 @@ class Sensor:
         """ Returns the value of a t sensor """
         return float(self.data[2]) / 10
 
+    def get_t_mean_value(self, value_list):
+        """ Returns the mean values of a given t-value list """
+        if not len(value_list):
+            return None
+        else:
+            return round(statistics.mean(value_list), 1)
+
     def get_th_values(self):
         """ Returns the values (temp/hum) of a th sensor """
         return (
@@ -127,4 +134,9 @@ class Sensor:
 
         rate, total = map(list, zip(*value_list))
         rain = round(total[-1] - total[0], 1)
+
+        # Rain can't be negative and in january many rain sensors are
+        # resetted to 0 which leads to negative values
+        if rain < 0:
+            rain = 0.0
         return round(statistics.mean(rate)), rain
