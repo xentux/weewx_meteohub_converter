@@ -40,6 +40,7 @@ def test_get_start_date():
         "builtins.open", mock_open(read_data="20071101145756 rain0 0 0 2764")
     ) as input_file:
         importer = Importer(input_file, "../out.txt")
+        importer.sort()
         assert (
             importer.get_start_date().strftime("%Y%m%d%H%M%S")
             == "20071101145756"
@@ -62,6 +63,7 @@ def test_get_interval(date, start, end):
         importer = Importer(input_file, "../out.txt")
         if date:
             date = datetime.strptime(date, "%Y%m%d%H%M%S")
+        importer.sort()
 
         interval_start, interval_end = importer.get_interval(date)
 
