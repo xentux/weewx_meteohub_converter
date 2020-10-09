@@ -1,12 +1,15 @@
 from weewx_meteohub.sensor import Sensor
 import datetime
 import csv
+import operator
+import tempfile
 
 
 class Importer:
     """ Class with methods for importing meteohub data to weewx """
 
     def __init__(self, input_file, output_file):
+
         # Open input and output files
         try:
             self.input_file = open(input_file, "r")
@@ -14,6 +17,7 @@ class Importer:
             return False
 
         self.output_file = open(output_file, "w")
+
         fieldnames = [
             "date_time",
             "temp",
@@ -38,15 +42,17 @@ class Importer:
         # Write csv header
         self.csv_writer.writeheader()
 
+        self.temp_file = tempfile.TemporaryFile(mode="w+t")
+
     def __del__(self):
-        # Close input and output files
+        # Close input and temp files
         self.input_file.close()
         self.output_file.close()
+        self.temp_file.close()
 
     def count_lines(self):
         """
         Counts the lines in the input file
-        This method is not used in the moment and may be deleted in future.
         """
         count = 0
         self.input_file.seek(0, 0)
@@ -82,7 +88,7 @@ class Importer:
         Writes csv data
         Temperatures will be rounded to 1 decimal digit
         Wind direction, solar radiation and humidity will be rounded
-        to a integer
+        to an integer
         """
 
         time = time.strftime("%Y-%m-%d %H:%M")
@@ -105,11 +111,14 @@ class Importer:
 
     def read(self):
         """ Reads the input_file and aggregates the 5-minute values """
+        self.sort()
+        # exit(0)
+
         start_date = self.get_start_date()
         print(f"Starting import at {start_date} ...")
 
         file_position = 0
-        self.input_file.seek(file_position)
+        self.temp_file.seek(file_position)
 
         # Count the number of imported data sets
         datasets_imported = 0
@@ -124,11 +133,10 @@ class Importer:
         interval_start, interval_end = self.get_interval(start_date)
         print(f"First interval: {interval_start} - {interval_end}")
 
-        for datasets_total, line in enumerate(self.input_file, 1):
+        for line in self.temp_file:
             sensor_data = Sensor(line)
             if interval_start <= sensor_data.get_date() < interval_end:
                 # print(f"in range - {sensor_data.get_date()}")
-                # print(f"{datasets_total}: {line}")
                 file_position += len(line)
 
                 if sensor_data.get_sensor_name() == "th0":
@@ -148,9 +156,14 @@ class Importer:
                     datasets_imported += 1
                 elif sensor_data.get_sensor_name() == "uv0":
                     pass
+
             else:
                 print(f"Time: {interval_end}\r", end="")
+                # print(f"Time: {interval_end}")
                 # print(f"---------- Time: {interval_end}-------------")
+
+                if sensor_data.get_date() < interval_start:
+                    print(f"MÖÖP - {sensor_data.get_date()} < {interval_start}")
 
                 rate, total = sensor_data.get_rain_mean_values(rain_value_list)
 
@@ -169,9 +182,10 @@ class Importer:
                     interval_end = interval_start + datetime.timedelta(
                         minutes=5
                     )
+                    # print(f"Interval Beginn {interval_start} ----------")
 
                 # one line back (we have to read the last dataset again)
-                self.input_file.seek(file_position)
+                self.temp_file.seek(file_position)
 
                 # Delete last interval data
                 thd_value_list = []
@@ -192,4 +206,23 @@ class Importer:
 
         # Show some information
         print(f"Finished import at {interval_end}")
-        print(f"{datasets_imported} of {datasets_total} datasets imported.")
+        print(f"{datasets_imported} of {self.count_lines()} datasets imported.")
+
+    def sort(self):
+        """ Sorts data sets by time """
+        datasets = []
+        print("Start sorting ...")
+        for datasets_total, line in enumerate(self.input_file, 1):
+            # If line containes more than \n
+            if len(line) > 1:
+                ds = line.split(" ", 1)
+                datasets.append(ds)
+            else:
+                print(f"skipped: {line}")
+
+        datasets.sort(key=operator.itemgetter(0))
+
+        for line in datasets:
+            self.temp_file.writelines(" ".join(str(r) for r in line))
+
+        print(f"Sorted {datasets_total} by time ...")
