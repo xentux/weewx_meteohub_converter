@@ -6,7 +6,10 @@ import tempfile
 
 
 class Importer:
-    """ Class with methods for importing meteohub data to weewx """
+    """
+    Class with methods for converting and
+    importing meteohub data to weewx
+    """
 
     def __init__(self, input_file, output_file):
 
@@ -18,6 +21,7 @@ class Importer:
 
         self.output_file = open(output_file, "w")
 
+        # Names of the CSV columns
         fieldnames = [
             "date_time",
             "temp",
@@ -32,28 +36,29 @@ class Importer:
             "rain",
             "rain_rate",
             "rad",
+            "uv",
         ]
 
-        # instanciate csv writer
+        # Instanciate csv writer
         self.csv_writer = csv.DictWriter(
             self.output_file, fieldnames=fieldnames
         )
 
-        # Write csv header
+        # Write csv header row
         self.csv_writer.writeheader()
 
+        # Create a temporary file
         self.temp_file = tempfile.TemporaryFile(mode="w+t")
 
     def __del__(self):
-        # Close input and temp files
+        """ The 'destructor' """
+        # Close all files
         self.input_file.close()
         self.output_file.close()
         self.temp_file.close()
 
     def count_lines(self):
-        """
-        Counts the lines in the input file
-        """
+        """ Counts the lines in the input file """
         count = 0
         self.input_file.seek(0, 0)
         for count, line in enumerate(self.input_file, 1):
@@ -61,9 +66,12 @@ class Importer:
         return count
 
     def get_start_date(self):
-        """ Reads the datetime of the first line in our input file """
-        self.input_file.seek(0, 0)
-        first_line = self.input_file.readline()
+        """ Reads the datetime of the first line in our input (temp) file """
+        # Be sure to get the first line
+        self.temp_file.seek(0, 0)
+        first_line = self.temp_file.readline()
+        # Set file back to the first line
+        self.temp_file.seek(0, 0)
         sensor = Sensor(first_line)
         return sensor.get_date()
 
@@ -83,12 +91,13 @@ class Importer:
 
         return interval_start, interval_end
 
-    def write(self, time, thd, thdb, wind, rain, sol):
+    def write(self, time, thd, thdb, wind, rain, sol, uv):
         """
         Writes csv data
         Temperatures will be rounded to 1 decimal digit
         Wind direction, solar radiation and humidity will be rounded
         to an integer
+        Rain is returned as a sum
         """
 
         time = time.strftime("%Y-%m-%d %H:%M")
@@ -106,13 +115,13 @@ class Importer:
         csv_data["rain"] = rain[1]
         csv_data["rain_rate"] = rain[0]
         csv_data["rad"] = sol
+        csv_data["uv"] = uv
 
         self.csv_writer.writerow(csv_data)
 
     def read(self):
         """ Reads the input_file and aggregates the 5-minute values """
         self.sort()
-        # exit(0)
 
         start_date = self.get_start_date()
         print(f"Starting import at {start_date} ...")
@@ -124,11 +133,12 @@ class Importer:
         datasets_imported = 0
 
         # Initialize data
-        thd_value_list = []
+        th_value_list = []
         thdb_value_list = []
         wind_value_list = []
         rain_value_list = []
         sol_value_list = []
+        uv_value_list = []
 
         interval_start, interval_end = self.get_interval(start_date)
         print(f"First interval: {interval_start} - {interval_end}")
@@ -139,14 +149,14 @@ class Importer:
                 # print(f"in range - {sensor_data.get_date()}")
                 file_position += len(line)
 
-                if sensor_data.get_sensor_name() == "th0":
-                    thd_value_list.append(sensor_data.get_th_values())
+                if sensor_data.get_sensor_name() == "wind0":
+                    wind_value_list.append(sensor_data.get_wind_values())
+                    datasets_imported += 1
+                elif sensor_data.get_sensor_name() == "th0":
+                    th_value_list.append(sensor_data.get_th_values())
                     datasets_imported += 1
                 elif sensor_data.get_sensor_name() == "thb0":
                     thdb_value_list.append(sensor_data.get_thb_values())
-                    datasets_imported += 1
-                elif sensor_data.get_sensor_name() == "wind0":
-                    wind_value_list.append(sensor_data.get_wind_values())
                     datasets_imported += 1
                 elif sensor_data.get_sensor_name() == "rain0":
                     rain_value_list.append(sensor_data.get_rain_values())
@@ -155,7 +165,8 @@ class Importer:
                     sol_value_list.append(sensor_data.get_sol_value())
                     datasets_imported += 1
                 elif sensor_data.get_sensor_name() == "uv0":
-                    pass
+                    uv_value_list.append(sensor_data.get_uv_value())
+                    datasets_imported += 1
 
             else:
                 print(f"Time: {interval_end}\r", end="")
@@ -163,20 +174,26 @@ class Importer:
                 # print(f"---------- Time: {interval_end}-------------")
 
                 if sensor_data.get_date() < interval_start:
-                    print(f"MÖÖP - {sensor_data.get_date()} < {interval_start}")
+                    # Datasets not sorted by time
+                    print(
+                        f"ERROR - {sensor_data.get_date()} < {interval_start}"
+                    )
+                    exit(1)
 
                 rate, total = sensor_data.get_rain_mean_values(rain_value_list)
 
+                # Write csv data
                 self.write(
                     interval_end,
-                    sensor_data.get_th_mean_values(thd_value_list),
+                    sensor_data.get_th_mean_values(th_value_list),
                     sensor_data.get_thb_mean_values(thdb_value_list),
                     sensor_data.get_wind_mean_values(wind_value_list),
                     sensor_data.get_rain_mean_values(rain_value_list),
                     sensor_data.get_sol_mean_value(sol_value_list),
+                    sensor_data.get_uv_mean_value(uv_value_list),
                 )
 
-                # next interval
+                # calculate next interval
                 if self.get_interval(sensor_data.get_date()):
                     interval_start = interval_end
                     interval_end = interval_start + datetime.timedelta(
@@ -184,24 +201,26 @@ class Importer:
                     )
                     # print(f"Interval Beginn {interval_start} ----------")
 
-                # one line back (we have to read the last dataset again)
+                # step one line back (we have to read the last dataset again)
                 self.temp_file.seek(file_position)
 
                 # Delete last interval data
-                thd_value_list = []
+                th_value_list = []
                 thdb_value_list = []
                 wind_value_list = []
                 rain_value_list = []
                 sol_value_list = []
+                uv_value_list = []
 
         # write last interval
         self.write(
             interval_end,
-            sensor_data.get_th_mean_values(thd_value_list),
+            sensor_data.get_th_mean_values(th_value_list),
             sensor_data.get_thb_mean_values(thdb_value_list),
             sensor_data.get_wind_mean_values(wind_value_list),
             sensor_data.get_rain_mean_values(rain_value_list),
             sensor_data.get_sol_mean_value(sol_value_list),
+            sensor_data.get_uv_mean_value(uv_value_list),
         )
 
         # Show some information

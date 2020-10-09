@@ -8,6 +8,7 @@ thb_data = "20071101145830 thb0 218 46 10 10240 3 10240"
 wind_data = "20110916104500 wind0 69 4 4 0189"
 sol_data = "20110916104143 sol0 487 30"
 rain_data = "20110909152323 rain0 0 0 8470"
+uv_data = "20180601000145 uv0 0"
 
 
 def test_get_date():
@@ -126,3 +127,16 @@ def test_get_rain_mean_values():
     rate, rain = sensor.get_rain_mean_values(value_list)
     assert rate == 0
     assert rain == 0.2
+
+
+def test_get_uv_value():
+    sensor = Sensor(uv_data)
+    uvi = sensor.get_uv_value()
+    assert uvi == 0
+
+
+def test_get_uv_mean_value():
+    sensor = Sensor(uv_data)
+    values_list = [5, 5, 8]
+    uvi = sensor.get_uv_mean_value(values_list)
+    assert uvi == 6

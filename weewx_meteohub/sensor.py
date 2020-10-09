@@ -105,6 +105,17 @@ class Sensor:
         else:
             return None
 
+    def get_uv_value(self):
+        """ Returns the value of a uv sensor """
+        return float(int(self.data[2]) / 10)
+
+    def get_uv_mean_value(self, value_list):
+        """ Returns the mean value of a given uv-value list """
+        if len(value_list):
+            return int(round(statistics.mean(value_list), 0))
+        else:
+            return None
+
     def get_rain_values(self):
         """ Returns the rain sensor values (rate/total) """
         return float(self.data[2]) / 10, float(self.data[4]) / 10
