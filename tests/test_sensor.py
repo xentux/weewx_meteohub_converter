@@ -39,6 +39,20 @@ def test_get_t_value():
     assert temp == 13.2
 
 
+def test_get_t_mean_value():
+    sensor = Sensor(t_data)
+    value_list = [5, 8, 8.5]
+    t = sensor.get_t_mean_value(value_list)
+    assert t == 7.2
+
+
+def test_get_t_mean_no_values():
+    sensor = Sensor(t_data)
+    value_list = []
+    t = sensor.get_t_mean_value(value_list)
+    assert True if t is None else False
+
+
 def test_get_th_values():
     sensor = Sensor(th_data)
     temp, hum, dew = sensor.get_th_values()
@@ -54,6 +68,15 @@ def test_get_th_mean_values():
     assert t == 7.2
     assert h == 2
     assert d == 3.2
+
+
+def test_get_th_mean_no_values():
+    sensor = Sensor(th_data)
+    value_list = []
+    t, h, d = sensor.get_th_mean_values(value_list)
+    assert True if t is None else False
+    assert True if h is None else False
+    assert True if d is None else False
 
 
 def test_get_thb_values():
@@ -82,6 +105,17 @@ def test_get_thb_mean_values():
     assert sl == 1024.4
 
 
+def test_get_thb_mean_no_values():
+    sensor = Sensor(thb_data)
+    value_list = []
+    t, h, d, b, sl = sensor.get_thb_mean_values(value_list)
+    assert True if t is None else False
+    assert True if h is None else False
+    assert True if d is None else False
+    assert True if b is None else False
+    assert True if sl is None else False
+
+
 def test_get_wind_values():
     sensor = Sensor(wind_data)
     dir, gust, avg, chill = sensor.get_wind_values()
@@ -101,6 +135,16 @@ def test_get_wind_mean_values():
     assert chill == 6
 
 
+def test_get_wind_mean_no_values():
+    sensor = Sensor(wind_data)
+    value_list = []
+    dir, gust, avg, chill = sensor.get_wind_mean_values(value_list)
+    assert True if dir is None else False
+    assert True if gust is None else False
+    assert True if avg is None else False
+    assert True if chill is None else False
+
+
 def test_get_sol_value():
     sensor = Sensor(sol_data)
     rad = sensor.get_sol_value()
@@ -114,6 +158,13 @@ def test_get_sol_mean_value():
     assert rad == 6
 
 
+def test_get_sol_mean_no_value():
+    sensor = Sensor(sol_data)
+    value_list = []
+    rad = sensor.get_sol_mean_value(value_list)
+    assert True if rad is None else False
+
+
 def test_get_rain_values():
     sensor = Sensor(rain_data)
     rate, total = sensor.get_rain_values()
@@ -123,10 +174,26 @@ def test_get_rain_values():
 
 def test_get_rain_mean_values():
     sensor = Sensor(rain_data)
-    value_list = [(0, 377.6), (0, 377.8), (0, 377.8)]
+    value_list = [(0, 377.6), (0, 377.8), (0, 378.2)]
     rate, rain = sensor.get_rain_mean_values(value_list)
     assert rate == 0
-    assert rain == 0.2
+    assert rain == 0.6
+
+
+def test_get_rain_mean_negative_values():
+    sensor = Sensor(rain_data)
+    value_list = [(0, 377.6), (0, 0.0)]
+    rate, rain = sensor.get_rain_mean_values(value_list)
+    assert rate == 0
+    assert rain == 0
+
+
+def test_get_rain_mean_no_values():
+    sensor = Sensor(rain_data)
+    value_list = []
+    rate, rain = sensor.get_rain_mean_values(value_list)
+    assert True if rate is None else False
+    assert True if rain is None else False
 
 
 def test_get_uv_value():
@@ -140,3 +207,10 @@ def test_get_uv_mean_value():
     values_list = [5, 5, 8]
     uvi = sensor.get_uv_mean_value(values_list)
     assert uvi == 6
+
+
+def test_get_uv_mean_no_value():
+    sensor = Sensor(uv_data)
+    value_list = []
+    uvi = sensor.get_uv_mean_value(value_list)
+    assert True if uvi is None else False
