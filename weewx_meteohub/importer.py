@@ -3,6 +3,7 @@ import datetime
 import csv
 import operator
 import tempfile
+import math
 
 
 class Importer:
@@ -22,21 +23,21 @@ class Importer:
         self.output_file = open(output_file, "w")
 
         # Names of the CSV columns
+        #Added Tempmin and Tempmax, removed UV and solar thing
         fieldnames = [
             "date_time",
             "temp",
+            "tempmin",
+            "tempmax",
             "hum",
             "dew",
-            "pressure",
-            "baro",
+            "QNH",
             "wind_dir",
             "gust_speed",
             "wind_speed",
             "wind_chill",
             "rain",
             "rain_rate",
-            "rad",
-            "uv",
         ]
 
         # Instanciate csv writer
@@ -91,11 +92,11 @@ class Importer:
 
         return interval_start, interval_end
 
-    def write(self, time, thd, thdb, wind, rain, sol, uv):
+    def write(self, time, thd, thdb, wind, rain):
         """
         Writes csv data
         Temperatures will be rounded to 1 decimal digit
-        Wind direction, solar radiation and humidity will be rounded
+        Wind direction, humidity will be rounded
         to an integer
         Rain is returned as a sum
         """
@@ -106,16 +107,15 @@ class Importer:
         csv_data["temp"] = thd[0]
         csv_data["hum"] = thd[1]
         csv_data["dew"] = thd[2]
-        csv_data["pressure"] = thdb[3]
-        csv_data["baro"] = thdb[4]
+        csv_data["tempmin"] = thd[3]
+        csv_data["tempmax"] = thd[4]
+        csv_data["QNH"] = thdb[4]
         csv_data["wind_dir"] = wind[0]
         csv_data["gust_speed"] = wind[1]
         csv_data["wind_speed"] = wind[2]
         csv_data["wind_chill"] = wind[3]
         csv_data["rain"] = rain[1]
         csv_data["rain_rate"] = rain[0]
-        csv_data["rad"] = sol
-        csv_data["uv"] = uv
 
         self.csv_writer.writerow(csv_data)
 
@@ -137,14 +137,18 @@ class Importer:
         thdb_value_list = []
         wind_value_list = []
         rain_value_list = []
-        sol_value_list = []
-        uv_value_list = []
+        raintotal_iteration_value_list = []
 
         interval_start, interval_end = self.get_interval(start_date)
         print(f"First interval: {interval_start} - {interval_end}")
 
+
+        #raintotal_iteration_value_list.append
         for line in self.temp_file:
             sensor_data = Sensor(line)
+            #if (len(line)-1) == -1:
+            #print(f"line {(line)}")
+            #print(f"file position {(file_position)}")
             if interval_start <= sensor_data.get_date() < interval_end:
                 # print(f"in range - {sensor_data.get_date()}")
                 file_position += len(line)
@@ -159,18 +163,13 @@ class Importer:
                     thdb_value_list.append(sensor_data.get_thb_values())
                     datasets_imported += 1
                 elif sensor_data.get_sensor_name() == "rain0":
+        #            raintotal_iteration_value_list.append(sensor_data.get_rain_cumul())
                     rain_value_list.append(sensor_data.get_rain_values())
-                    datasets_imported += 1
-                elif sensor_data.get_sensor_name() == "sol0":
-                    sol_value_list.append(sensor_data.get_sol_value())
-                    datasets_imported += 1
-                elif sensor_data.get_sensor_name() == "uv0":
-                    uv_value_list.append(sensor_data.get_uv_value())
                     datasets_imported += 1
 
             else:
                 print(f"Time: {interval_end}\r", end="")
-                # print(f"Time: {interval_end}")
+                #print(f"COUCOU")
                 # print(f"---------- Time: {interval_end}-------------")
 
                 if sensor_data.get_date() < interval_start:
@@ -180,18 +179,32 @@ class Importer:
                     )
                     exit(1)
 
-                rate, total = sensor_data.get_rain_mean_values(rain_value_list)
-
+                #rate, total = sensor_data.get_rain_mean_values(rain_value_list)
+                if (sensor_data.get_rain_cumul(rain_value_list)) != None:
+                    raintotal_iteration_value_list.append(sensor_data.get_rain_cumul(rain_value_list))
+                #print(f"raintotal_iteration_value_list {raintotal_iteration_value_list}")
                 # Write csv data
-                self.write(
-                    interval_end,
-                    sensor_data.get_th_mean_values(th_value_list),
-                    sensor_data.get_thb_mean_values(thdb_value_list),
-                    sensor_data.get_wind_mean_values(wind_value_list),
-                    sensor_data.get_rain_mean_values(rain_value_list),
-                    sensor_data.get_sol_mean_value(sol_value_list),
-                    sensor_data.get_uv_mean_value(uv_value_list),
-                )
+                #print(f"nombre de case {len(raintotal_iteration_value_list)}")
+                if len(raintotal_iteration_value_list) == 1:
+                    #print (f"Premier Interval atteint et ecriture")
+                    if (sensor_data.get_th_mean_values(th_value_list) != (None, None, None, None, None)) and (sensor_data.get_thb_mean_values(thdb_value_list) != (None, None, None, None, None)) and (sensor_data.get_wind_mean_values(wind_value_list) != (None, None, None, None)) and (sensor_data.get_rain_mean_values(rain_value_list) != (None, None)):
+                        self.write(
+                            interval_end,
+                            sensor_data.get_th_mean_values(th_value_list),
+                            sensor_data.get_thb_mean_values(thdb_value_list),
+                            sensor_data.get_wind_mean_values(wind_value_list),
+                            sensor_data.get_rain_mean_values(rain_value_list),
+                        )
+                else:
+                    if (sensor_data.get_th_mean_values(th_value_list) != (None, None, None, None, None)) and (sensor_data.get_thb_mean_values(thdb_value_list) != (None, None, None, None, None)) and (sensor_data.get_wind_mean_values(wind_value_list) != (None, None, None, None)) and (sensor_data.get_rain_mean_values(rain_value_list) != (None, None)):
+                        self.write(
+                            interval_end,
+                            sensor_data.get_th_mean_values(th_value_list),
+                            sensor_data.get_thb_mean_values(thdb_value_list),
+                            sensor_data.get_wind_mean_values(wind_value_list),
+                            sensor_data.get_rain_mean_values_consolidate(rain_value_list,raintotal_iteration_value_list[-2]),
+                        )
+
 
                 # calculate next interval
                 if self.get_interval(sensor_data.get_date()):
@@ -209,19 +222,16 @@ class Importer:
                 thdb_value_list = []
                 wind_value_list = []
                 rain_value_list = []
-                sol_value_list = []
-                uv_value_list = []
 
         # write last interval
-        self.write(
-            interval_end,
-            sensor_data.get_th_mean_values(th_value_list),
-            sensor_data.get_thb_mean_values(thdb_value_list),
-            sensor_data.get_wind_mean_values(wind_value_list),
-            sensor_data.get_rain_mean_values(rain_value_list),
-            sensor_data.get_sol_mean_value(sol_value_list),
-            sensor_data.get_uv_mean_value(uv_value_list),
-        )
+        if (sensor_data.get_th_mean_values(th_value_list) != (None, None, None, None, None)) and (sensor_data.get_thb_mean_values(thdb_value_list) != (None, None, None, None, None)) and (sensor_data.get_wind_mean_values(wind_value_list) != (None, None, None, None)) and (sensor_data.get_rain_mean_values_consolidate(rain_value_list,raintotal_iteration_value_list[-2]) != (None, None)):
+            self.write(
+                interval_end,
+                sensor_data.get_th_mean_values(th_value_list),
+                sensor_data.get_thb_mean_values(thdb_value_list),
+                sensor_data.get_wind_mean_values(wind_value_list),
+                sensor_data.get_rain_mean_values_consolidate(rain_value_list,raintotal_iteration_value_list[-2]),
+            )
         print(f"Last interval: {interval_start} - {interval_end}")
 
         # Show some information
