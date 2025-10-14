@@ -31,3 +31,5 @@ csv_data/
 # data
 *.csv
 
+# Meteohub raw data
+Meteohub_Rohdaten/
