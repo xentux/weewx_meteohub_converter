@@ -24,7 +24,7 @@ def main():
         dest="input_file",
         type="string",
         metavar="INPUT_FILE",
-        help="Use input file INPUT_FILE.",
+        help="Meteohub raw data file.",
     )
     parser.add_option(
         "-o",
@@ -32,8 +32,17 @@ def main():
         dest="output_file",
         type="string",
         metavar="OUTPUT_FILE",
-        help="Use output file OUTPUT_FILE.",
+        help="File to write csv data to.",
     )
+
+    parser.add_option(
+        "-a",
+        "--append",
+        dest="append_outputfile",
+        action="store_true",
+        help="append data to outputfile",
+    )
+
 
     # Now we are ready to parse the command line:
     options, args = parser.parse_args()
@@ -45,7 +54,7 @@ def main():
         print("Missing output file!")
         exit(1)
 
-    importer = Importer(options.input_file, options.output_file)
+    importer = Importer(options.input_file, options.output_file, options.append_outputfile)
     importer.read()
 
 

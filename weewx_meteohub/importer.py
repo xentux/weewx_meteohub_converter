@@ -11,7 +11,7 @@ class Importer:
     importing meteohub data to weewx
     """
 
-    def __init__(self, input_file, output_file):
+    def __init__(self, input_file, output_file, append_outputfile):
 
         # Open input and output files
         try:
@@ -19,7 +19,10 @@ class Importer:
         except FileNotFoundError:
             return False
 
-        self.output_file = open(output_file, "w")
+        if append_outputfile:
+            self.output_file = open(output_file, "a")
+        else:
+            self.output_file = open(output_file, "w")
 
         # Names of the CSV columns
         fieldnames = [
@@ -45,7 +48,8 @@ class Importer:
         )
 
         # Write csv header row
-        self.csv_writer.writeheader()
+        if not append_outputfile:
+            self.csv_writer.writeheader()
 
         # Create a temporary file
         self.temp_file = tempfile.TemporaryFile(mode="w+t")

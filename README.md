@@ -8,13 +8,25 @@ At this point of development, the importer works for me, but there is really **a
 If you have need to import meteohub raw data to your WeeWX system or want to contribute, don't hesitate to contact me. I'll try to help.
 
 ## Usage
-This python module reads the meteohub raw data and converts it to csv files which can be imported to WeeWX using the WeeWX wee_import util.
+This python script reads the meteohub raw data and converts it to csv files which can be imported to WeeWX using the WeeWX wee_import util.
 
 `./wm_convert.py -i 202001/raw -o 202001.csv`
 
-Then use *wee_import* to import the csv file to WeeWX, f.e. `wee_import --import-config=config/csv.conf`
+Then use *weectl import* to import the csv file to WeeWX. It is a good practice to run a dry run first:
+`weectl import --import-config=config/csv.conf --dry-run`
+
+When there is no error, you can:  
+`weectl import --import-config=config/csv.conf`
 
 I provided an example config file in */config*.
+
+You may use the *--append* option to cumulate import data for example for a whole year:  
+`./wm_convert.py -i 202001/raw -o 2020.csv`  
+`./wm_convert.py -i 202002/raw -o 2020.csv -a`  
+... repeat month for month up to december.  
+`./wm_convert.py -i 202012/raw -o 2020.csv -a`
+
+In this way you'll get a *2020.csv* with all data from january to december. You can import this file instead of 12 single months. Be aware that this import may take very long depending on your hardware.
 
 ## How does it work?
 The converter reads the given raw data file, sorts the datasets (lines) by date and writes this sorted data to a temporary file. (I don't want to touch the original data - just for the case that someone doesn't have a backup.) I discovered the issue that the meteohub raw data files may not be in chronological order. This causes issues during calcuating the time condensed input data. That's the cause why I sort the input data.
@@ -28,4 +40,5 @@ At the end the intervals are written to the output file in CSV format. You can i
 - Implement T-sensors
 
 ## History
-- Added input file sorting 
+- Added input file sorting
+- Added --append option
