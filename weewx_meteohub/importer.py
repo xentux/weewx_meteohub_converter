@@ -23,7 +23,7 @@ class Importer:
 
         # Names of the CSV columns
         fieldnames = [
-            "date_time",
+            "dateTime",
             "temp",
             "hum",
             "dew",
@@ -102,7 +102,7 @@ class Importer:
 
         time = time.strftime("%Y-%m-%d %H:%M")
         csv_data = {}
-        csv_data["date_time"] = time
+        csv_data["dateTime"] = time
         csv_data["temp"] = thd[0]
         csv_data["hum"] = thd[1]
         csv_data["dew"] = thd[2]
