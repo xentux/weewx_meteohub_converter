@@ -133,7 +133,7 @@ class Sensor:
             return None, None
 
         rate, total = map(list, zip(*value_list))
-        rain = round(total[-1] - total[0], 1)
+        rain = round(total[-1], 1)
 
         # Rain can't be negative and in january many rain sensors are
         # resetted to 0 which leads to negative values
